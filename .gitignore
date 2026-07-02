@@ -1,0 +1,56 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files.
+#
+# Not "can opt-in" - `keeper/.env` holds the keeper's private key and the seed
+# master, and the master is what every committed seed on-chain was derived
+# from. Committing it once, to a public repo, means anyone can compute the
+# outcome of a pack before buying it.
+.env
+.env.*
+!.env.example
+keeper/.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Written by the deploy script - the address belongs in the README, not in a
+# file that changes on every redeploy.
+keeper/deployment.json
+
+# Vercel's local link.
+.vercel

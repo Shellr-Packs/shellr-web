@@ -1,0 +1,53 @@
+{
+  "name": "shellr-web",
+  "version": "1.7.9",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.11",
+    "@react-spring/web": "^10.0.3",
+    "@tanstack/react-query": "^5.102.8",
+    "lenis": "^1.3.19",
+    "next": "16.2.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "resize-observer-polyfill": "^1.5.1",
+    "spring-text-engine": "^0.1.5",
+    "three": "^0.185.1",
+    "viem": "^2.56.1",
+    "wagmi": "^2.16.9",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.185.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "optionalDependencies": {
+    "@x402/core": "^2.25.0",
+    "@x402/evm": "^2.25.0",
+    "@x402/svm": "^2.25.0"
+  },
+  "description": "shellr.trade - buy a sealed pack, open it, pull memcoins on Robinhood Chain.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shellr-Packs/shellr-web.git"
+  },
+  "homepage": "https://shellr.trade",
+  "engines": {
+    "node": ">=20"
+  }
+}
