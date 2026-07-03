@@ -1,0 +1,469 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   TIER 1 — PRIMITIVES  (`--raw-*`)
+   Raw literal values. The only tier allowed to contain a hex/px/ms literal.
+   Never referenced in markup, never bound into @theme. Rename freely.
+   Grammar: --raw-<category>-<name>[-<shade>]
+   See obsidian/frontend/design-system.md → "Token naming convention".
+   --------------------------------------------------------------------------- */
+:root {
+  --raw-color-white: #ffffff;
+  /* The hero's chrome, read off the Figma frame (node 1097:251). Kept even
+     while unused: it is what the site was designed in, and the accent below is
+     one line away from being it again. */
+  --raw-color-mint-100: #dbfffe;
+  /* Being tried in place of the mint - neutral silver, no hue at all. */
+  --raw-color-silver-100: #d6d8db;
+  --raw-color-black: #000000;
+  --raw-color-neutral-100: #ededed;
+  --raw-color-neutral-900: #171717;
+  --raw-color-neutral-950: #0a0a0a;
+
+  --raw-duration-fast: 150ms;
+  --raw-duration-normal: 250ms;
+
+  /* Room the 3D scene is lit in — matched to the scene's own fog colour,
+     src/lib/scene/config.ts → environment.fog. */
+}
+
+/* ---------------------------------------------------------------------------
+   TIER 2 — SEMANTIC  (role names, no namespace prefix)
+   Purpose, not appearance. Always `var(--raw-*)` — never a literal.
+   This is the themeable layer: dark mode overrides happen HERE, which is why
+   these are separate from the @theme bindings below (see the note there).
+   Grammar: --<role>[-<variant>][-<state>]
+   --------------------------------------------------------------------------- */
+:root {
+  --background: var(--raw-color-white);
+  --foreground: var(--raw-color-neutral-900);
+
+  --duration-fast: var(--raw-duration-fast);
+  --duration-normal: var(--raw-duration-normal);
+
+  /* Chrome over the 3D scene: the frame's rules, its corners, and the nav pill.
+     The rules are half-strength white and the corners are full — that contrast
+     is the design's, not an accident, and it is what makes the corners read as
+     brackets rather than as part of the box. */
+  --hud-rule: color-mix(in srgb, var(--raw-color-white) 50%, transparent);
+  --hud-corner: var(--raw-color-white);
+  --hud-text: var(--raw-color-white);
+  --nav-surface: color-mix(in srgb, var(--raw-color-white) 20%, transparent);
+  /* The pill's dropped panel. **Opaque**, unlike the pill itself: the pill
+     carries three short words over a scene that is mostly dark behind it, but
+     the panel is a column of text standing over the hero's headline, and at 20%
+     white the two read through each other. */
+  --nav-panel: var(--raw-color-neutral-950);
+  --nav-text: var(--raw-color-white);
+  --nav-accent: var(--raw-color-silver-100);
+  --nav-accent-ink: var(--raw-color-black);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--raw-color-neutral-950);
+    --foreground: var(--raw-color-neutral-100);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   THEME BINDINGS — map semantic tokens into Tailwind namespaces.
+   Every entry is exactly `--<tw-namespace>-<role>: var(--<role>)`.
+   `inline` is required: it inlines the var() into each utility, so the
+   dark-mode overrides on the Tier 2 tokens above cascade. Binding a literal
+   here instead would freeze the value and break theming.
+
+   Only these namespaces generate utilities (verified against tailwindcss
+   v4.3.3): --color-* --spacing-* --radius-* --leading-* --tracking-* --text-*
+   --font-* --ease-* --breakpoint-* --container-* --shadow-* --blur-* --animate-*
+   NOTE: there is NO --duration-* namespace in v4 — `duration-fast` compiles to
+   nothing. Durations stay Tier 2 only and are used as duration-[var(--duration-fast)].
+   --------------------------------------------------------------------------- */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-chakra-petch);
+  /* The hollow display face — headings only. */
+  --font-display: var(--font-big-shoulders);
+
+  --color-hud-rule: var(--hud-rule);
+  --color-hud-corner: var(--hud-corner);
+  --color-hud-text: var(--hud-text);
+  --color-nav-surface: var(--nav-surface);
+  --color-nav-panel: var(--nav-panel);
+  --color-nav-text: var(--nav-text);
+  --color-nav-accent: var(--nav-accent);
+  --color-nav-accent-ink: var(--nav-accent-ink);
+
+  /* Leading floor for clipped TextEngine reveals — see
+     obsidian/frontend/text-engine.md → "Alignment & line-height". */
+  --leading-display: 1.1;
+
+  --ease-entrance: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Normal block flow. The starter shipped this as a centred flex box to hold an
+   empty page; as a flex container it shrink-to-fits the ScrollLayout wrappers,
+   so any page whose content is absolutely positioned (a full-bleed canvas)
+   collapses them to zero width. See obsidian/meta/decisions-log.md ADR-0019. */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100lvh;
+}
+
+/* No scrollbar. The page is one continuous shot eight screens tall and the bar
+   is a ruler laid down its right edge — it reads the height of the *document*,
+   which here is only a device for driving the scene, and says nothing a visitor
+   wants to know.
+
+   Both spellings: `scrollbar-width` is the standard one (Firefox, and Chromium
+   since 121) and the pseudo-element is what older WebKit answers to. The page
+   still scrolls by every means it did — wheel, trackpad, keys, touch — and the
+   only thing lost is the drag handle. */
+html {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
+@layer base {
+  /* Adaptive scaling grid — scales the root font-size with the viewport so a
+     rem-based layout stays proportional. Each breakpoint divides FONT_BASE
+     (16px) by the design base width its range was laid out at:
+       font-size: 16 * 100 / baseWidth  (vw)
+     Above 1920px the AdaptiveGrid component takes over (scale-up).
+     Keep in sync with src/components/common/grid/grid.config.ts.
+
+     The two lower ranges carry a **floor and a ceiling**, which the plain
+     starter ladder does not. A range's bottom edge is always `16 ×
+     bottomWidth / baseWidth`, and unclamped that is what the tablet and phone
+     ranges were doing to this design: 10px root at 641px (the whole page at
+     62%, body copy at ten pixels) and 28px root at 640px (the phone layout at
+     1.8×, a nav pill wider than the window). The clamps hold each range inside
+     the size its layout was drawn for; below the floor the layout **reflows**
+     — see the `sm:`/`lg:` variants through `components/common/` — instead of
+     going on shrinking. See obsidian/frontend/design-system.md → "The ladder". */
+  html {
+    font-size: 16px;
+  }
+
+  @media (max-width: 1920px) {
+    html {
+      font-size: 0.833333vw; /* 16 * 100 / 1920 */
+    }
+  }
+
+  @media (max-width: 1440px) {
+    html {
+      font-size: 1.111111vw; /* 16 * 100 / 1440 */
+    }
+  }
+
+  /* Tablet. Stops at 1023.98 rather than 1024 so it never overlaps Tailwind's
+     `lg:` (min-width: 64rem) — the width where the desktop layout takes over is
+     the width where its own base does. */
+  @media (max-width: 1023.98px) {
+    html {
+      font-size: max(1.5625vw, 12px); /* 16 * 100 / 1024, floored */
+    }
+  }
+
+  /* Phone, matching Tailwind's `sm:` boundary. Capped so a 640px-wide window
+     — a phone turned on its side — does not render a 360px design at 1.8×. */
+  @media (max-width: 639.98px) {
+    html {
+      font-size: min(4.444444vw, 18px); /* 16 * 100 / 360, capped */
+    }
+  }
+}
+
+@layer utilities {
+  /* Painted surfaces.
+
+     The brief is the banner's technique without its palette. The first attempt
+     was thousands of small chips and it read as gravel, not paint — the
+     reference's marks are *broad*, and what makes them read as paint is the
+     light across them rather than their number. So this field is ninety large
+     sweeps blurred into a ground, a few hundred softer marks over it for
+     direction, and one pool of light where the banner has its sun.
+
+     It goes on surfaces only — panels and buttons. It was on the preloader too
+     and came straight back off: that screen is a number climbing on an empty
+     field, and a ground behind it is something to read instead of the number. It is applied as a *surface*, never as decoration on its
+     own: `paint-over` lays it across something that already has a colour, so
+     the colour comes back through it.
+
+     Soft-light rather than overlay: overlay crushes the mint to white on the
+     lit marks, which loses the one colour the site has. */
+  .paint-over {
+    position: relative;
+  }
+
+  .paint-over::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: url("/assets/paint/field-v49.webp");
+    background-size: cover;
+    background-position: center;
+    mix-blend-mode: soft-light;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* The same paint, laid *under* the content instead of over it.
+
+     On a button the texture running across the label is the point — the whole
+     thing is one painted object. On a panel carrying a column of small type it
+     is not: soft-light over eight-point text is a smudge. So this one paints
+     below, and the content sits on `z-10` above it. */
+  .paint-under {
+    position: relative;
+  }
+
+  .paint-under::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background-image: url("/assets/paint/field-v49.webp");
+    background-size: cover;
+    background-position: center;
+    mix-blend-mode: soft-light;
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  /* The Pons Pack sheet — see components/common/packs/pons-pack.tsx.
+
+     Four movements, all of them answering something the visitor did: the
+     backdrop and the panel arrive because a pack was asked for, the seal
+     breathes while a pack is being opened, and the pouch's highlight is the
+     one thing that runs on a timer — a still highlight on black foil reads as
+     a printed gradient rather than as light on plastic. */
+  @keyframes pons-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes pons-rise {
+    from {
+      opacity: 0;
+      transform: translateY(1.25rem) scale(0.97);
+    }
+  }
+
+  @keyframes pons-sheen {
+    0%,
+    100% {
+      opacity: 0.35;
+      transform: translate(-6%, -4%);
+    }
+    50% {
+      opacity: 0.9;
+      transform: translate(6%, 4%);
+    }
+  }
+
+  @keyframes pons-breathe {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  .pons-fade {
+    animation: pons-fade var(--duration-normal) var(--ease-entrance);
+  }
+
+  .pons-rise {
+    animation: pons-rise 420ms var(--ease-entrance);
+  }
+
+  .pons-sheen {
+    animation: pons-sheen 6s ease-in-out infinite;
+  }
+
+  /* Three dots that fill in and clear, for waits with no progress to report.
+     Staggered by delay rather than drawn per frame, so it costs nothing. */
+  @keyframes pons-dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.15;
+    }
+    40% {
+      opacity: 1;
+    }
+  }
+
+  .pons-dot {
+    animation: pons-dot 1.4s ease-in-out infinite;
+  }
+
+  /* Liquid glass on a ticker in running text.
+     A plate with a highlight, a faint glow under it, and a sheen that crosses
+     slowly - the same treatment the Quiver staking hero used, where a flat
+     highlighter mark read as a marker pen rather than as a material. */
+  .shellr-glass {
+    position: relative;
+    display: inline-block;
+    padding: 0 0.28em;
+    margin: 0 0.04em;
+    border-radius: 0.3em;
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.07) 42%,
+      rgba(214, 216, 219, 0.14) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.5),
+      inset 0 -11px 16px rgba(214, 216, 219, 0.12),
+      0 8px 22px rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(4px) saturate(1.4);
+    backdrop-filter: blur(4px) saturate(1.4);
+  }
+
+  .shellr-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 1;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 42%);
+  }
+
+  .shellr-glass::after {
+    content: "";
+    position: absolute;
+    top: -10%;
+    left: -70%;
+    width: 42%;
+    height: 120%;
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(
+      105deg,
+      transparent,
+      rgba(255, 255, 255, 0.45),
+      transparent
+    );
+    transform: skewX(-18deg);
+    animation: shellr-sheen 5s ease-in-out infinite;
+  }
+
+  @keyframes shellr-sheen {
+    0% {
+      left: -70%;
+    }
+    60% {
+      left: 140%;
+    }
+    100% {
+      left: 140%;
+    }
+  }
+
+  .pons-breathe {
+    animation: pons-breathe 1.4s ease-in-out infinite;
+  }
+
+  /* Everything above is decoration on a flow that works without it. */
+  @media (prefers-reduced-motion: reduce) {
+    .pons-fade,
+    .pons-rise,
+    .pons-sheen,
+    /* Liquid glass on a ticker in running text.
+     A plate with a highlight, a faint glow under it, and a sheen that crosses
+     slowly - the same treatment the Quiver staking hero used, where a flat
+     highlighter mark read as a marker pen rather than as a material. */
+  .shellr-glass {
+    position: relative;
+    display: inline-block;
+    padding: 0 0.28em;
+    margin: 0 0.04em;
+    border-radius: 0.3em;
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.07) 42%,
+      rgba(214, 216, 219, 0.14) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.5),
+      inset 0 -11px 16px rgba(214, 216, 219, 0.12),
+      0 8px 22px rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(4px) saturate(1.4);
+    backdrop-filter: blur(4px) saturate(1.4);
+  }
+
+  .shellr-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 1;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 42%);
+  }
+
+  .shellr-glass::after {
+    content: "";
+    position: absolute;
+    top: -10%;
+    left: -70%;
+    width: 42%;
+    height: 120%;
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(
+      105deg,
+      transparent,
+      rgba(255, 255, 255, 0.45),
+      transparent
+    );
+    transform: skewX(-18deg);
+    animation: shellr-sheen 5s ease-in-out infinite;
+  }
+
+  @keyframes shellr-sheen {
+    0% {
+      left: -70%;
+    }
+    60% {
+      left: 140%;
+    }
+    100% {
+      left: 140%;
+    }
+  }
+
+  .pons-breathe {
+      animation: none;
+    }
+  }
+}
+
+@layer components {
+  /* Empty. The scene's vignette used to live here as a pseudo-element overlay;
+     it is now part of the CRT pass that the scene ends on, which is one falloff
+     instead of two stacked and — unlike a gradient in a stylesheet — something
+     the tuning panel can move. See obsidian/frontend/scene-3d.md. */
+}
