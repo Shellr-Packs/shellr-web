@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Windows tile. The three ms-icon-*.png this shipped pointing at were never
+     in public/, so every tile request 404'd; it names the icons that exist
+     instead, and the tile takes the site's own black rather than white. -->
+<browserconfig>
+  <msapplication>
+    <tile>
+      <square70x70logo src="/android-icon-72x72.png"/>
+      <square150x150logo src="/android-icon-144x144.png"/>
+      <square310x310logo src="/android-icon-192x192.png"/>
+      <TileColor>#000000</TileColor>
+    </tile>
+  </msapplication>
+</browserconfig>
