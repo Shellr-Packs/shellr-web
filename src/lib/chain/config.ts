@@ -31,17 +31,17 @@ export const robinhood = defineChain({
 });
 
 /**
- * The deployed contract.
+ * The deployed contract, supplied by the environment.
  *
- * Written here rather than left to an environment variable: the address is
- * public the moment it exists, the site is deployed by dragging a folder at a
- * shell prompt, and a build that silently falls back to the browser roll
- * because a variable did not reach the host is the worst of the failure modes.
- * The variable still wins where it is set, for a testnet copy.
+ * No address is committed to this repository. `NEXT_PUBLIC_PACKS_ADDRESS` is
+ * the only source, which means a build that does not carry it falls back to the
+ * browser roll rather than pointing a Buy button at a contract nobody set.
+ *
+ * That fallback is silent by design and it is the one thing to check first when
+ * a deployment "stops taking money": read `isLive` in the browser console
+ * before reading anything else.
  */
-const DEPLOYED = "0xe442c40cD9e99a9D37f9a364794bC8959c2D4ebe";
-
-const configured = process.env.NEXT_PUBLIC_PACKS_ADDRESS ?? DEPLOYED;
+const configured = process.env.NEXT_PUBLIC_PACKS_ADDRESS ?? "";
 
 /** The deployed contract, or `null` while there is not one. */
 export const PACKS_ADDRESS: `0x${string}` | null =

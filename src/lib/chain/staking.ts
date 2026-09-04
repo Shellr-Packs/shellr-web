@@ -15,16 +15,13 @@ import { confirmTx, publicClient, useWallet } from "@/lib/chain/wallet";
  */
 
 /**
- * The deployed staking contract.
+ * The deployed staking contract, supplied by the environment.
  *
- * Written here rather than left to an environment variable, for the same
- * reason as the packs address: the site is deployed from a shell prompt, and a
- * build that quietly decides staking is not live because a variable did not
- * reach the host is the worst of the failure modes.
+ * Same rule as the packs address: nothing is committed here, so
+ * `NEXT_PUBLIC_STAKING_ADDRESS` is the only source and a build without it
+ * decides staking is not live.
  */
-const DEPLOYED = "0xeE341fb06627C650e45552FfCe5159E7D19e2506";
-
-const configured = process.env.NEXT_PUBLIC_STAKING_ADDRESS ?? DEPLOYED;
+const configured = process.env.NEXT_PUBLIC_STAKING_ADDRESS ?? "";
 
 export const STAKING_ADDRESS: Address | null = /^0x[0-9a-fA-F]{40}$/.test(
   configured,
@@ -33,15 +30,15 @@ export const STAKING_ADDRESS: Address | null = /^0x[0-9a-fA-F]{40}$/.test(
   : null;
 
 /**
- * Checksummed, deliberately.
+ * Set it checksummed.
  *
  * A lowercase address is legal and most tooling accepts it - and then one
  * library in the chain decides it is not, refuses the call, and the failure
  * surfaces as a balance of zero rather than as an error. That is a whole
  * evening lost to "the wallet shows nothing", and it has happened before.
  */
-export const SHELLR_TOKEN =
-  "0x77A719B0F3E7072FC80eD5D67f9aAA580b245462" as Address;
+export const SHELLR_TOKEN = (process.env.NEXT_PUBLIC_SHELLR_TOKEN ??
+  "") as Address;
 export const WETH = "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73" as Address;
 
 export const stakingLive = STAKING_ADDRESS !== null;

@@ -45,11 +45,13 @@ Everything that branches on this reads `isLive` in
 the variable itself, so the day it is set the wallet button, the buy and the
 vault all switch over together.
 
-The deployed address is written into that file as a constant, not left to the
-environment. The address is public the moment it exists, the site is deployed by
-dragging a folder at a shell prompt, and a build that silently falls back to the
-browser roll because a variable did not reach the host is the worst of the
-failure modes. The variable still wins where it is set, for a testnet copy.
+No contract address is committed to this repository. The environment is the only
+source, which means a build that does not carry the variable falls back to the
+browser roll rather than pointing a Buy button at a contract nobody set.
+
+That fallback is silent by design, and it is the first thing to check when a
+deployment "stops taking money": read `isLive` in the browser console before
+reading anything else. `.env.example` lists all four addresses the site needs.
 
 ```
 NEXT_PUBLIC_RPC_URL=https://rpc.mainnet.chain.robinhood.com
@@ -71,7 +73,6 @@ before any real traffic.
 | `/stocks` | Stock Packs. One tokenized equity per pack, filled via [Voxelithic](https://github.com/Voxelithicag) |
 | `/staking` | Stake $SHELLR, claim WETH |
 | `/battles` | Head-to-head pack opening |
-| `/docs` | How the draw works, in the language of somebody who has not read Solidity |
 
 ## Layout
 
