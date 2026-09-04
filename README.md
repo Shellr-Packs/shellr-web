@@ -68,7 +68,7 @@ before any real traffic.
 | `/inventory` | The vault. What you pulled, what it is worth, sell back |
 | `/compacks` | Community packs - line-ups anyone can propose, and vote on |
 | `/launchpad` | Pons launchpad listings that packs can reach |
-| `/stocks` | Stock Packs. One tokenized equity per pack, filled via Voxelithic |
+| `/stocks` | Stock Packs. One tokenized equity per pack, filled via [Voxelithic](https://github.com/Voxelithicag) |
 | `/staking` | Stake $SHELLR, claim WETH |
 | `/battles` | Head-to-head pack opening |
 | `/docs` | How the draw works, in the language of somebody who has not read Solidity |
@@ -138,6 +138,7 @@ two things that fail at build rather than in dev.
 | [shellr-contracts](https://github.com/Shellr-Packs/shellr-contracts) | The draw, the bankroll, the commit queue |
 | [shellr-keeper](https://github.com/Shellr-Packs/shellr-keeper) | Queues seeds, reveals packs |
 | [shellr-sdk](https://github.com/Shellr-Packs/shellr-sdk) | Reads, calldata, and `verifyPack` |
+| [shellr-stock-packs](https://github.com/Shellr-Packs/shellr-stock-packs) | The Voxelithic integration behind `/stocks` |
 
 The site currently carries its own trimmed ABIs in `src/lib/chain` rather than
 importing the SDK. That is a decision with an expiry date on it: the SDK exists
